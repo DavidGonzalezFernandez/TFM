@@ -2,6 +2,8 @@ import pandas as pd
 import sklearn
 import sklearn.datasets
 import os
+from typing import Dict
+import numpy as np
 
 HELOC_NAME = "HELOC"
 ADULT_INCOME_NAME = "AdultIncome"
@@ -10,9 +12,21 @@ COVERTYPE_NAME = "Covertype"
 CALIFORNIA_HOUSING_NAME = "CaliforniaHousing"
 ARBOVIRUSES_NAME = "Arboviruses"
 
-def load_data(
-    dataset_name      
-):
+RANDOM_SEED = 1234
+
+TEST_SPLIT_SIZE = 0.1
+VAL_SPLIT_SIZE = 0.1
+
+n_samples_per_dataset: Dict[str, int] = {
+    HELOC_NAME: 10459,
+    ADULT_INCOME_NAME: 32561,
+    HIGGS_NAME: 11000000,
+    COVERTYPE_NAME: 581012,
+    CALIFORNIA_HOUSING_NAME: 20640,
+    ARBOVIRUSES_NAME: 17172,
+}
+
+def get_X_y(dataset_name: str):
     if dataset_name == HELOC_NAME:
         # I downloaded the CSV (pero se puede sacar lo mismo de dataset = load_dataset("mstz/heloc"))
         path_to_dataset = os.path.join("datasets", "heloc_dataset_v1.csv")
@@ -31,6 +45,13 @@ def load_data(
         columns = features + [label]
         df = pd.read_csv(url_data, names=columns)
         df = df.dropna()
+
+        string_columns = ["workclass", "education", "marital-status", "occupation", "relationship", "race", "sex", "native-country"]
+
+        for columna in string_columns:
+            le = sklearn.preprocessing.LabelEncoder()
+            df[columna] = le.fit_transform(df[columna])
+
         X = df[features].to_numpy()
         y = df[label].replace({' >50K': 0, ' <=50K': 1}).astype(int).to_numpy()
     
@@ -55,7 +76,7 @@ def load_data(
         ]
         label_col = df.columns[0]
 
-        X = df.drop(label_col, axis=1).to_numpy()
+        X = df.drop(label_col, axis=1).replace({0.0: 0, 1.0: 1}).to_numpy()
         y = df[label_col].to_numpy()
     
     elif dataset_name == COVERTYPE_NAME:
@@ -71,9 +92,87 @@ def load_data(
         df = df.dropna()
         label_col = "CLASSI_FIN"
         X = df.drop(label_col, axis=1).to_numpy()
+
+        le = sklearn.preprocessing.LabelEncoder()
+        df[label_col] = le.fit_transform(df[label_col])
+
         y = df[label_col].to_numpy()
     
     else:
-        raise ValueError("Cannot find a dataset with that key.")
+        raise ValueError("Cannot find a dataset with that name.")
     
+    assert X.shape[0] == n_samples_per_dataset[dataset_name]
     return X,y
+
+def get_indices_train_eval(dataset_name: str):
+    total_elems: int = n_samples_per_dataset.get(dataset_name, -1)
+    if total_elems == -1:
+        raise ValueError("Cannot find a dataset with that name.")
+    
+    # Create the array with all the indices
+    indices = np.arange(total_elems)
+
+    # Remove the indices from the eval
+    indices_test = get_indices_test(dataset_name)
+    non_test_indices = np.setdiff1d(indices, indices_test)
+    assert indices_test.shape[0] + non_test_indices.shape[0] == total_elems
+
+    # Split the remaining
+    r = np.random.default_rng(seed=RANDOM_SEED)
+    r.shuffle(non_test_indices)
+
+    n_val = int(total_elems * VAL_SPLIT_SIZE)
+    train_indices, val_indices = non_test_indices[:-n_val], non_test_indices[-n_val:]
+    assert train_indices.shape[0] + val_indices.shape[0] == non_test_indices.shape[0]
+    return train_indices, val_indices
+
+def get_indices_train1_eval1_train2_eval2(dataset_name: str):
+    total_elems: int = n_samples_per_dataset.get(dataset_name, -1)
+    if total_elems == -1:
+        raise ValueError("Cannot find a dataset with that name.")
+
+    # Create the array with all the indices
+    indices = np.arange(total_elems)
+
+    # Remove the indices from eval
+    indices_test = get_indices_test(dataset_name)
+    non_test_indices = np.setdiff1d(indices, indices_test)
+    assert indices_test.shape[0] + non_test_indices.shape[0] == total_elems
+
+    # Split 50% for 1 and 50% for 2
+    split_size = non_test_indices.shape[0] // 2
+    split_1, split_2 = non_test_indices[:split_size], non_test_indices[split_size:]
+    assert split_1.shape[0] + split_2.shape[0] == non_test_indices.shape[0]
+
+    r = np.random.default_rng(seed=RANDOM_SEED)
+    n_val = int(total_elems * VAL_SPLIT_SIZE)//2
+
+    # Get train 1 and eval 1
+    r.shuffle(split_1)
+    train_1, val_1 = split_1[:-n_val], split_1[n_val:]
+    assert train_1.shape[0] + val_1.shape[0] == split_1.shape[0]
+
+    # Get train2 and eval 2
+    r.shuffle(split_2)
+    train_2, val_2 = split_2[:-n_val], split_2[n_val:]
+    assert train_2.shape[0] + val_2.shape[0] == split_2.shape[0]
+
+    # Return
+    assert train_1.shape[0] + val_1.shape[0] + train_2.shape[0] + val_2.shape[0] == non_test_indices.shape[0]
+    return train_1, val_1, train_2, val_2
+
+def get_indices_test(dataset_name: str):
+    total_elems: int = n_samples_per_dataset.get(dataset_name, -1)
+    if total_elems == -1:
+        raise ValueError("Cannot find a dataset with that name.")
+
+    # Create the array with all the indices
+    indices = np.arange(total_elems)
+
+    # Shuffle the indices
+    r = np.random.default_rng(seed=RANDOM_SEED)
+    r.shuffle(indices)
+
+    # Return the N first
+    n = int(total_elems * TEST_SPLIT_SIZE)
+    return indices[:n]
