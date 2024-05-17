@@ -38,12 +38,12 @@ def get_X_y(dataset_name: str):
     
     elif dataset_name == ADULT_INCOME_NAME:
         # Lo descargo directamente de la página
-        url_data = "https://archive.ics.uci.edu/ml/machine-learning-databases/adult/adult.data"
+        path_to_dataset = os.path.join("datasets", "adult.data.txt")
         features = ['age', 'workclass', 'fnlwgt', 'education', 'education_num', 'marital-status', 'occupation',
                     'relationship', 'race', 'sex', 'capital-gain', 'capital-loss', 'hours-per-week', 'native-country']
         label = "income"
         columns = features + [label]
-        df = pd.read_csv(url_data, names=columns)
+        df = pd.read_csv(path_to_dataset, names=columns)
         df = df.dropna()
 
         string_columns = ["workclass", "education", "marital-status", "occupation", "relationship", "race", "sex", "native-country"]
