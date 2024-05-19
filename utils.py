@@ -158,12 +158,12 @@ def get_indices_train1_eval1_train2_eval2(dataset_name: str):
 
     # Get train 1 and eval 1
     r.shuffle(split_1)
-    train_1, val_1 = split_1[:-n_val], split_1[n_val:]
+    train_1, val_1 = split_1[:-n_val], split_1[-n_val:]
     assert train_1.shape[0] + val_1.shape[0] == split_1.shape[0]
 
     # Get train2 and eval 2
     r.shuffle(split_2)
-    train_2, val_2 = split_2[:-n_val], split_2[n_val:]
+    train_2, val_2 = split_2[:-n_val], split_2[-n_val:]
     assert train_2.shape[0] + val_2.shape[0] == split_2.shape[0]
 
     # Return
