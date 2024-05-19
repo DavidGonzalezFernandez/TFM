@@ -17,13 +17,22 @@ RANDOM_SEED = 1234
 TEST_SPLIT_SIZE = 0.1
 VAL_SPLIT_SIZE = 0.1
 
-n_samples_per_dataset: Dict[str, int] = {
+N_SAMPLES_PER_DATASET: Dict[str, int] = {
     HELOC_NAME: 10459,
     ADULT_INCOME_NAME: 32561,
     HIGGS_NAME: 11000000,
     COVERTYPE_NAME: 581012,
     CALIFORNIA_HOUSING_NAME: 20640,
     ARBOVIRUSES_NAME: 17172,
+}
+
+DATASET_TYPES = {
+    HELOC_NAME: "supervised",
+    ADULT_INCOME_NAME: "supervised",
+    COVERTYPE_NAME: "supervised",
+    CALIFORNIA_HOUSING_NAME: "regression",
+    ARBOVIRUSES_NAME: "supervised",
+    HIGGS_NAME: "supervised",
 }
 
 def get_X_y(dataset_name: str):
@@ -101,11 +110,11 @@ def get_X_y(dataset_name: str):
     else:
         raise ValueError("Cannot find a dataset with that name.")
     
-    assert X.shape[0] == n_samples_per_dataset[dataset_name]
+    assert X.shape[0] == N_SAMPLES_PER_DATASET[dataset_name]
     return X,y
 
 def get_indices_train_eval(dataset_name: str):
-    total_elems: int = n_samples_per_dataset.get(dataset_name, -1)
+    total_elems: int = N_SAMPLES_PER_DATASET.get(dataset_name, -1)
     if total_elems == -1:
         raise ValueError("Cannot find a dataset with that name.")
     
@@ -127,7 +136,7 @@ def get_indices_train_eval(dataset_name: str):
     return train_indices, val_indices
 
 def get_indices_train1_eval1_train2_eval2(dataset_name: str):
-    total_elems: int = n_samples_per_dataset.get(dataset_name, -1)
+    total_elems: int = N_SAMPLES_PER_DATASET.get(dataset_name, -1)
     if total_elems == -1:
         raise ValueError("Cannot find a dataset with that name.")
 
@@ -162,7 +171,7 @@ def get_indices_train1_eval1_train2_eval2(dataset_name: str):
     return train_1, val_1, train_2, val_2
 
 def get_indices_test(dataset_name: str):
-    total_elems: int = n_samples_per_dataset.get(dataset_name, -1)
+    total_elems: int = N_SAMPLES_PER_DATASET.get(dataset_name, -1)
     if total_elems == -1:
         raise ValueError("Cannot find a dataset with that name.")
 
@@ -176,3 +185,20 @@ def get_indices_test(dataset_name: str):
     # Return the N first
     n = int(total_elems * TEST_SPLIT_SIZE)
     return indices[:n]
+
+def get_results_path():
+    p = "results"
+    if p not in os.listdir():
+        os.mkdir(p)
+    return p
+
+def get_dataset_type(dataset_name: str):
+    dataset_type = DATASET_TYPES.get(dataset_name, None)
+
+    if dataset_type is None:
+        raise ValueError("Cannot find a dataset with that name.")
+    
+    return dataset_type
+
+def is_dataset_classification(dataset_name: str):
+    return get_dataset_type(dataset_name) == "supervised"
