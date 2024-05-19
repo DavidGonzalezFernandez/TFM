@@ -192,6 +192,12 @@ def get_results_path():
         os.mkdir(p)
     return p
 
+def get_images_path():
+    p = "images"
+    if p not in os.listdir():
+        os.mkdir(p)
+    return p
+
 def get_dataset_type(dataset_name: str):
     dataset_type = DATASET_TYPES.get(dataset_name, None)
 
