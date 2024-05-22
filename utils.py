@@ -17,6 +17,12 @@ RANDOM_SEED = 1234
 TEST_SPLIT_SIZE = 0.1
 VAL_SPLIT_SIZE = 0.1
 
+BINARY_CLASSIFICATION_DATASETS = [
+    HELOC_NAME,
+    ADULT_INCOME_NAME,
+    HIGGS_NAME
+]
+
 N_SAMPLES_PER_DATASET: Dict[str, int] = {
     HELOC_NAME: 10459,
     ADULT_INCOME_NAME: 32561,
@@ -90,6 +96,7 @@ def get_X_y(dataset_name: str):
     
     elif dataset_name == COVERTYPE_NAME:
         X,y = sklearn.datasets.fetch_covtype(return_X_y=True)
+        y = y-1
     
     elif dataset_name == CALIFORNIA_HOUSING_NAME:
         X, y = sklearn.datasets.fetch_california_housing(return_X_y=True)
@@ -208,3 +215,7 @@ def get_dataset_type(dataset_name: str):
 
 def is_dataset_classification(dataset_name: str):
     return get_dataset_type(dataset_name) == "supervised"
+
+def is_dataset_multiclass_classification(dataset_name: str):
+    return is_dataset_classification(dataset_name) and \
+        dataset_name not in BINARY_CLASSIFICATION_DATASETS
