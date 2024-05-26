@@ -4,227 +4,246 @@ import os
 import numpy as np
 import shutil
 
-from TINTOlib.barGraph import BarGraph
-from TINTOlib.combination import Combination
 from TINTOlib.igtd import IGTD
 from TINTOlib.refined import REFINED
+from TINTOlib.barGraph import BarGraph
 from TINTOlib.distanceMatrix import DistanceMatrix
+from TINTOlib.combination import Combination
 from TINTOlib.tinto import TINTO
+from TINTOlib.supertml import SuperTML
 
-from utils import HELOC_NAME, ADULT_INCOME_NAME, HIGGS_NAME, COVERTYPE_NAME, CALIFORNIA_HOUSING_NAME, ARBOVIRUSES_NAME
+from tqdm import tqdm
 
+from utils import HELOC_NAME, CALIFORNIA_HOUSING_NAME, COVERTYPE_NAME, DENGUE_DATASET
+from utils import IGTD_NAME, REFINED_NAME, BARGRAPH_NAME, DISTANCE_MATRIX_NAME, COMBINATION_NAME, TINTO_NAME, SUPERTML_EF_NAME, SUPERTML_VF_NAME
+from utils import ALL_DATASETS, ALL_IMAGE_METHODS
 
-pd.set_option('future.no_silent_downcasting', True)
-
-datasets = [HELOC_NAME, ADULT_INCOME_NAME, HIGGS_NAME, COVERTYPE_NAME, CALIFORNIA_HOUSING_NAME, ARBOVIRUSES_NAME]
-
-dataset_scale = {
-    HELOC_NAME: [5,5],
-    ADULT_INCOME_NAME: [4,4],
-    COVERTYPE_NAME: [8,8],
-    CALIFORNIA_HOUSING_NAME: [3,3],
-    ARBOVIRUSES_NAME: [6,6],
-    HIGGS_NAME: [6,6],
+DATASET_ZOOM = {
+    HELOC_NAME: 5,
+    CALIFORNIA_HOUSING_NAME: 10,
+    DENGUE_DATASET: 4,
+    COVERTYPE_NAME: 3,
 }
+assert set(DATASET_ZOOM.keys()) == set(ALL_DATASETS)
+
+DATASET_SQRT_COLUMNS = {
+    HELOC_NAME: 5,
+    CALIFORNIA_HOUSING_NAME: 3,
+    DENGUE_DATASET: 6,
+    COVERTYPE_NAME: 8,
+}
+assert set(DATASET_SQRT_COLUMNS.keys()) == set(ALL_DATASETS)
+
+DATASET_SUPERTML_EF_TEXT_SIZES = {
+    HELOC_NAME: 5,
+    CALIFORNIA_HOUSING_NAME: 7,
+    DENGUE_DATASET: 5,
+    COVERTYPE_NAME: 4,
+}
+assert set(DATASET_SUPERTML_EF_TEXT_SIZES.keys()) == set(ALL_DATASETS)
+
+DATASET_SUPERTML_VF_TEXT_SIZES = {
+    HELOC_NAME: 25,
+    CALIFORNIA_HOUSING_NAME: 35,
+    DENGUE_DATASET: 40,
+    COVERTYPE_NAME: 40,
+}
+assert set(DATASET_SUPERTML_EF_TEXT_SIZES.keys()) == set(ALL_DATASETS)
+
+def dataset_to_igtd(dataset_name):
+    image_method_name = IGTD_NAME
+    p = utils.get_images_path_for_dataset(dataset_name, image_method_name)
+    if any(f.endswith(".csv") for f in os.listdir(p)):
+        # Already created
+        return
+    
+    # Remove folder with images from previous runs
+    shutil.rmtree(p)
+
+    image_model = IGTD(
+        problem=utils.get_dataset_type_str(dataset_name),
+        scale = [DATASET_SQRT_COLUMNS[dataset_name], DATASET_SQRT_COLUMNS[dataset_name]],
+        zoom=DATASET_ZOOM[dataset_name]
+    )
+    X,y = utils.get_X_y(dataset_name)
+    df = pd.DataFrame(np.column_stack ((X,y)))
+    image_model.generateImages(
+        df,
+        utils.get_images_path_for_dataset(dataset_name, image_method_name)
+    )
+
+def dataset_to_refined(dataset_name):
+    image_method_name = REFINED_NAME
+    p = utils.get_images_path_for_dataset(dataset_name, image_method_name)
+    if any(f.endswith(".csv") for f in os.listdir(p)):
+        # Already created
+        return
+    
+    # Remove folder with images from previous runs
+    shutil.rmtree(p)
+
+    image_model = REFINED(
+        problem=utils.get_dataset_type_str(dataset_name),
+        zoom=DATASET_ZOOM[dataset_name]
+    )
+    X,y = utils.get_X_y(dataset_name)
+    df = pd.DataFrame(np.column_stack ((X,y)))
+    image_model.generateImages(
+        df,
+        utils.get_images_path_for_dataset(dataset_name, image_method_name)
+    )
+
+def dataset_to_bargraph(dataset_name):
+    image_method_name = BARGRAPH_NAME
+    p = utils.get_images_path_for_dataset(dataset_name, image_method_name)
+    if any(f.endswith(".csv") for f in os.listdir(p)):
+        # Already created
+        return
+    
+    # Remove folder with images from previous runs
+    shutil.rmtree(p)
+
+    image_model = BarGraph(
+        problem=utils.get_dataset_type_str(dataset_name),
+        gap=2
+    )
+    X,y = utils.get_X_y(dataset_name)
+    df = pd.DataFrame(np.column_stack ((X,y)))
+    image_model.generateImages(
+        df,
+        utils.get_images_path_for_dataset(dataset_name, image_method_name)
+    )
+
+def dataset_to_distancematrix(dataset_name):
+    image_method_name = DISTANCE_MATRIX_NAME
+    p = utils.get_images_path_for_dataset(dataset_name, image_method_name)
+    if any(f.endswith(".csv") for f in os.listdir(p)):
+        # Already created
+        return
+    
+    # Remove folder with images from previous runs
+    shutil.rmtree(p)
+
+    image_model = DistanceMatrix(
+        problem=utils.get_dataset_type_str(dataset_name),
+        zoom=DATASET_ZOOM[dataset_name]
+    )
+    X,y = utils.get_X_y(dataset_name)
+    df = pd.DataFrame(np.column_stack ((X,y)))
+    image_model.generateImages(
+        df,
+        utils.get_images_path_for_dataset(dataset_name, image_method_name)
+    )
+
+def dataset_to_combination(dataset_name):
+    image_method_name = COMBINATION_NAME
+    p = utils.get_images_path_for_dataset(dataset_name, image_method_name)
+    if any(f.endswith(".csv") for f in os.listdir(p)):
+        # Already created
+        return
+    
+    # Remove folder with images from previous runs
+    shutil.rmtree(p)
+
+    image_model = Combination(
+        problem=utils.get_dataset_type_str(dataset_name),
+        zoom=DATASET_ZOOM[dataset_name]
+    )
+    X,y = utils.get_X_y(dataset_name)
+    df = pd.DataFrame(np.column_stack ((X,y)))
+    image_model.generateImages(
+        df,
+        utils.get_images_path_for_dataset(dataset_name, image_method_name)
+    )
+
+def dataset_to_tinto(dataset_name):
+    image_method_name = TINTO_NAME
+    p = utils.get_images_path_for_dataset(dataset_name, image_method_name)
+    if any(f.endswith(".csv") for f in os.listdir(p)):
+        # Already created
+        return
+    
+    # Remove folder with images from previous runs
+    shutil.rmtree(p)
+
+    image_model = TINTO(
+        problem=utils.get_dataset_type_str(dataset_name),
+        pixels=20
+    )
+    X,y = utils.get_X_y(dataset_name)
+    df = pd.DataFrame(np.column_stack ((X,y)))
+    image_model.generateImages(
+        df,
+        utils.get_images_path_for_dataset(dataset_name, image_method_name)
+    )
+
+def dataset_to_supertml_ef(dataset_name):
+    image_method_name = SUPERTML_EF_NAME
+    p = utils.get_images_path_for_dataset(dataset_name, image_method_name)
+    if any(f.endswith(".csv") for f in os.listdir(p)):
+        # Already created
+        return
+    
+    # Remove folder with images from previous runs
+    shutil.rmtree(p)
+
+    image_model = SuperTML(
+        problem=utils.get_dataset_type_str(dataset_name),
+        feature_importance=False,
+        font_size = DATASET_SUPERTML_EF_TEXT_SIZES[dataset_name],
+        pixels = 112
+    )
+    X,y = utils.get_X_y(dataset_name)
+    df = pd.DataFrame(np.column_stack ((X,y)))
+    image_model.generateImages(
+        df,
+        utils.get_images_path_for_dataset(dataset_name, image_method_name)
+    )
+
+def dataset_to_supertml_vf(dataset_name):
+    image_method_name = SUPERTML_VF_NAME
+    p = utils.get_images_path_for_dataset(dataset_name, image_method_name)
+    if any(f.endswith(".csv") for f in os.listdir(p)):
+        # Already created
+        return
+    
+    # Remove folder with images from previous runs
+    shutil.rmtree(p)
+
+    image_model = SuperTML(
+        problem=utils.get_dataset_type_str(dataset_name),
+        feature_importance=True,
+        font_size = DATASET_SUPERTML_VF_TEXT_SIZES[dataset_name],
+        pixels = 112
+    )
+    X,y = utils.get_X_y(dataset_name)
+    df = pd.DataFrame(np.column_stack ((X,y)))
+    image_model.generateImages(
+        df,
+        utils.get_images_path_for_dataset(dataset_name, image_method_name)
+    )
+
+def dataset_to_images(dataset_name):
+    functions_to_use = [
+        dataset_to_igtd,
+        dataset_to_refined,
+        dataset_to_bargraph,
+        dataset_to_distancematrix,
+        dataset_to_combination,
+        dataset_to_tinto,
+        dataset_to_supertml_ef,
+        dataset_to_supertml_vf
+    ]
+    assert len(ALL_IMAGE_METHODS) == len(functions_to_use)
+    
+    print(dataset_name)
+    for f in tqdm(functions_to_use, total=len(functions_to_use)):
+        f(dataset_name)
 
 
 def main():
-    base_path = utils.get_images_path()
-
-    if base_path not in os.listdir():
-        os.mkdir(base_path)
-
-    create_igtd(base_path)
-    create_refined(base_path)
-    # create_barGraph(base_path)          # TODO: check
-    # create_combination(base_path)       # TODO: check   
-    # create_distanceMatrix(base_path)    # TODO: check
-    # TODO: add SUPERTML
-    create_tinto(base_path)
-
-def create_tinto(base_path):
-    image_folder = "tinto"
-    image_path = os.path.join(base_path, image_folder)
-    if image_folder not in os.listdir(base_path):
-        os.mkdir(image_path)
-    
-    print("Creating tinto")
-
-    for dataset_name in datasets:
-        print(f"\t{dataset_name}")
-
-        dataset_folder = dataset_name.lower()
-        final_folder = os.path.join(image_path, dataset_folder)
-        if dataset_folder in os.listdir(image_path):
-            if any(f.endswith(".csv") for f in os.listdir(final_folder)):
-                continue
-            else:
-                shutil.rmtree(dataset_folder)
-
-        X,y = utils.get_X_y(dataset_name)
-        df = pd.DataFrame(np.column_stack ((X,y)))
-
-        image_model = TINTO(
-            problem=utils.get_dataset_type(dataset_name),
-            verbose=False,
-            pixels = dataset_scale[dataset_name][0]
-        )
-
-        image_model.generateImages(df,final_folder)
-
-def create_distanceMatrix(base_path):
-    image_folder = "distancematrix"
-    image_path = os.path.join(base_path, image_folder)
-    if image_folder not in os.listdir(base_path):
-        os.mkdir(image_path)
-    
-    print("Creating distancematrix")
-
-    for dataset_name in datasets:
-        print(f"\t{dataset_name}")
-
-        dataset_folder = dataset_name.lower()
-        final_folder = os.path.join(image_path, dataset_folder)
-        if dataset_folder in os.listdir(image_path):
-            if any(f.endswith(".csv") for f in os.listdir(final_folder)):
-                continue
-            else:
-                shutil.rmtree(dataset_folder)
-
-        X,y = utils.get_X_y(dataset_name)
-        df = pd.DataFrame(np.column_stack ((X,y)))
-
-        image_model = DistanceMatrix(
-            verbose=False,
-            scale=dataset_scale[dataset_name],
-            problem=utils.get_dataset_type(dataset_name)
-        )
-
-        image_model.generateImages(df,final_folder)
-
-def create_combination(base_path):
-    image_folder = "combination"
-    image_path = os.path.join(base_path, image_folder)
-    if image_folder not in os.listdir(base_path):
-        os.mkdir(image_path)
-    
-    print("Creating combination")
-
-    for dataset_name in datasets:
-        print(f"\t{dataset_name}")
-
-        dataset_folder = dataset_name.lower()
-        final_folder = os.path.join(image_path, dataset_folder)
-        if dataset_folder in os.listdir(image_path):
-            if any(f.endswith(".csv") for f in os.listdir(final_folder)):
-                continue
-            else:
-                shutil.rmtree(dataset_folder)
-
-        X,y = utils.get_X_y(dataset_name)
-        df = pd.DataFrame(np.column_stack ((X,y)))
-
-        image_model = Combination(
-            verbose=False,
-            pixel_width=1,
-            gap=1,
-            problem=utils.get_dataset_type(dataset_name)
-        )
-
-        image_model.generateImages(df,final_folder)
-
-def create_barGraph(base_path):
-    image_folder = "bargraph"
-    image_path = os.path.join(base_path, image_folder)
-    if image_folder not in os.listdir(base_path):
-        os.mkdir(image_path)
-    
-    print("Creating bargraph")
-
-    for dataset_name in datasets:
-        print(f"\t{dataset_name}")
-
-        dataset_folder = dataset_name.lower()
-        final_folder = os.path.join(image_path, dataset_folder)
-        if dataset_folder in os.listdir(image_path):
-            if any(f.endswith(".csv") for f in os.listdir(final_folder)):
-                continue
-            else:
-                shutil.rmtree(dataset_folder)
-
-        X,y = utils.get_X_y(dataset_name)
-        df = pd.DataFrame(np.column_stack ((X,y)))
-
-        image_model = BarGraph(
-            verbose=False,
-            pixel_width=1,
-            gap=1,
-            problem=utils.get_dataset_type(dataset_name)
-        )
-
-        image_model.generateImages(df,final_folder)
-
-def create_refined(base_path):
-    image_folder = "refined"
-    image_path = os.path.join(base_path, image_folder)
-    if image_folder not in os.listdir(base_path):
-        os.mkdir(image_path)
-    
-    print("Creating REFINED")
-
-    for dataset_name in datasets:
-        print(f"\t{dataset_name}")
-
-        dataset_folder = dataset_name.lower()
-        final_folder = os.path.join(image_path, dataset_folder)
-        if dataset_folder in os.listdir(image_path):
-            if any(f.endswith(".csv") for f in os.listdir(final_folder)):
-                continue
-            else:
-                shutil.rmtree(dataset_folder)
-
-        X,y = utils.get_X_y(dataset_name)
-        df = pd.DataFrame(np.column_stack ((X,y)))
-
-        image_model = REFINED(
-            problem=utils.get_dataset_type(dataset_name),
-            verbose=False
-        )
-
-        image_model.generateImages(df,final_folder)
-
-
-
-def create_igtd(base_path):
-    image_folder = "igtd"
-    image_path = os.path.join(base_path, image_folder)
-    if image_folder not in os.listdir(base_path):
-        os.mkdir(image_path)
-    
-    print("Creating IGTD")
-
-    # Iterate over dataset
-    for dataset_name in datasets:
-        print(f"\t{dataset_name}")
-
-        dataset_folder = dataset_name.lower()
-        final_folder = os.path.join(image_path, dataset_folder)
-        if dataset_folder in os.listdir(image_path):
-            if any(f.endswith(".csv") for f in os.listdir(final_folder)):
-                continue
-            else:
-                shutil.rmtree(dataset_folder)
-
-        X,y = utils.get_X_y(dataset_name)
-        df = pd.DataFrame(np.column_stack ((X,y)))
-
-        image_model = IGTD(
-            problem=utils.get_dataset_type(dataset_name),
-            scale = dataset_scale[dataset_name],
-            verbose=False
-        )
-
-        image_model.generateImages(df,final_folder)
+    for dataset_name in ALL_DATASETS:
+        dataset_to_images(dataset_name)
 
 
 if __name__ == "__main__":
