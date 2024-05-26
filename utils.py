@@ -12,8 +12,20 @@ CALIFORNIA_HOUSING_NAME = "California_Housing"
 DENGUE_DATASET = "Dengue_Chikungunya"
 COVERTYPE_NAME = "Covertype"
 
+IGTD_NAME = "IGTD"
+REFINED_NAME = "REFINED"
+BARGRAPH_NAME = "BARGRAPH"
+DISTANCE_MATRIX_NAME = "DISTANCE_MATRIX"
+COMBINATION_NAME = "COMBINATION"
+TINTO_NAME = "TINTO"
+SUPERTML_EF_NAME = "SuperTML_EF"
+SUPERTML_VF_NAME = "SuperTML_VF"
+
 """List with all the available datasets"""
-ALL_DATASETS = [HELOC_NAME, CALIFORNIA_HOUSING_NAME, DENGUE_DATASET, COVERTYPE_NAME,]
+ALL_DATASETS = [HELOC_NAME, CALIFORNIA_HOUSING_NAME, DENGUE_DATASET, COVERTYPE_NAME]
+
+"""List with all the available image methods"""
+ALL_IMAGE_METHODS = [IGTD_NAME, REFINED_NAME, BARGRAPH_NAME, DISTANCE_MATRIX_NAME, COMBINATION_NAME, TINTO_NAME, SUPERTML_EF_NAME, SUPERTML_VF_NAME]
 
 """Seed for reproducibility in shuffling and spliting"""
 RANDOM_SEED = 1234
@@ -168,9 +180,22 @@ def get_results_path():
         os.mkdir(p)
     return p
 
-def get_images_path():
+def get_images_base_path():
     p = "images"
-    if p not in os.listdir():
+    if not os.path.exists(p):
+        os.mkdir(p)
+    return p
+
+def get_images_path_for_dataset(dataset_name, image_method):
+    if dataset_name not in ALL_DATASETS:
+        raise Exception("This dataset does not exist")
+    if image_method not in ALL_IMAGE_METHODS:
+        raise Exception("This image method does not exist")
+    p = os.path.join(get_images_base_path(), dataset_name)
+    if not os.path.exists(p):
+        os.mkdir(p)
+    p = os.path.join(p, image_method)
+    if not os.path.exists(p):
         os.mkdir(p)
     return p
 
