@@ -1,98 +1,60 @@
 import pandas as pd
-import sklearn
 import sklearn.datasets
 import os
 from typing import Dict
 import numpy as np
 
+# Strings representing each dataset
 HELOC_NAME = "HELOC"
-ADULT_INCOME_NAME = "AdultIncome"
-HIGGS_NAME = "HIGGS"
-COVERTYPE_NAME = "Covertype"
 CALIFORNIA_HOUSING_NAME = "CaliforniaHousing"
-ARBOVIRUSES_NAME = "Arboviruses"
+DENGUE_DATASET = ""
+COVERTYPE_NAME = "Covertype"
 
+"""List with all the available datasets"""
+ALL_DATASETS = [HELOC_NAME, CALIFORNIA_HOUSING_NAME, DENGUE_DATASET, COVERTYPE_NAME,]
+
+"""Seed for reproducibility in shuffling and spliting"""
 RANDOM_SEED = 1234
 
+"""Size of test split (in percentage)"""
 TEST_SPLIT_SIZE = 0.1
+
+"""Size of validation split (in percentage)"""
 VAL_SPLIT_SIZE = 0.1
 
-BINARY_CLASSIFICATION_DATASETS = [
-    HELOC_NAME,
-    ADULT_INCOME_NAME,
-    HIGGS_NAME
-]
+"""List with the datasets that are binary classification"""
+BINARY_CLASSIFICATION_DATASETS = [HELOC_NAME, DENGUE_DATASET]
+assert all(c in ALL_DATASETS for c in BINARY_CLASSIFICATION_DATASETS)
 
+"""Dictionary with pairs of dataset key and number of samples"""
 N_SAMPLES_PER_DATASET: Dict[str, int] = {
-    HELOC_NAME: 10459,
-    ADULT_INCOME_NAME: 32561,
-    HIGGS_NAME: 11000000,
-    COVERTYPE_NAME: 581012,
+    HELOC_NAME: 9871,
     CALIFORNIA_HOUSING_NAME: 20640,
-    ARBOVIRUSES_NAME: 17172,
+    DENGUE_DATASET: 11448,
+    COVERTYPE_NAME: 581012,
 }
+assert set(ALL_DATASETS) == set(N_SAMPLES_PER_DATASET.keys())
 
-DATASET_TYPES = {
+"""Dictionary with pairs of dataset key and 'problem' string for TINTOlib"""
+DATASET_TYPES: Dict[str, str] = {
     HELOC_NAME: "supervised",
-    ADULT_INCOME_NAME: "supervised",
-    COVERTYPE_NAME: "supervised",
     CALIFORNIA_HOUSING_NAME: "regression",
-    ARBOVIRUSES_NAME: "supervised",
-    HIGGS_NAME: "supervised",
+    DENGUE_DATASET: "supervised",
+    COVERTYPE_NAME: "supervised",
 }
+assert set(ALL_DATASETS) == set(DATASET_TYPES.keys())
 
 def get_X_y(dataset_name: str):
-    if dataset_name == HELOC_NAME:
-        # I downloaded the CSV (pero se puede sacar lo mismo de dataset = load_dataset("mstz/heloc"))
-        path_to_dataset = os.path.join("datasets", "heloc_dataset_v1.csv")
+    """Given the string that represents a dataset, returns X and y"""
+    if dataset_name not in ALL_DATASETS:
+        raise ValueError("Cannot find a dataset with that name.")
+    
+    elif dataset_name == HELOC_NAME:
+        path_to_dataset = os.path.join("datasets", "heloc.csv")
         df = pd.read_csv(path_to_dataset)
-        df = df.dropna()
         label_col = "RiskPerformance"
         X = df.drop(label_col, axis=1).to_numpy()
-        y = df[label_col].replace({"Good":0, "Bad": 1}).astype(int).to_numpy()
-    
-    elif dataset_name == ADULT_INCOME_NAME:
-        # Lo descargo directamente de la página
-        path_to_dataset = os.path.join("datasets", "adult.data.txt")
-        features = ['age', 'workclass', 'fnlwgt', 'education', 'education_num', 'marital-status', 'occupation',
-                    'relationship', 'race', 'sex', 'capital-gain', 'capital-loss', 'hours-per-week', 'native-country']
-        label = "income"
-        columns = features + [label]
-        df = pd.read_csv(path_to_dataset, names=columns)
-        df = df.dropna()
-
-        string_columns = ["workclass", "education", "marital-status", "occupation", "relationship", "race", "sex", "native-country"]
-
-        for columna in string_columns:
-            le = sklearn.preprocessing.LabelEncoder()
-            df[columna] = le.fit_transform(df[columna])
-
-        X = df[features].to_numpy()
-        y = df[label].replace({' >50K': 0, ' <=50K': 1}).astype(int).to_numpy()
-    
-    elif dataset_name == HIGGS_NAME:
-        # Se puede descargar el archivo https://archive.ics.uci.edu/dataset/280/higgs
-        path_to_dataset = os.path.join("datasets", "HIGGS.csv.gz")
-        df = pd.read_csv(path_to_dataset, header=None)
-        df = df.dropna()
-
-        """The first column is the class label (1 for signal, 0 for background),
-        followed by the 28 features (21 low-level features then 7 high-level features):
-        lepton  pT, lepton  eta, lepton  phi, missing energy magnitude, missing energy phi,
-        jet 1 pt, jet 1 eta, jet 1 phi, jet 1 b-tag, jet 2 pt, jet 2 eta, jet 2 phi,
-        jet 2 b-tag, jet 3 pt, jet 3 eta, jet 3 phi, jet 3 b-tag, jet 4 pt, jet 4 eta,
-        jet 4 phi, jet 4 b-tag, m_jj, m_jjj, m_lv, m_jlv, m_bb, m_wbb, m_wwbb."""
-
-        df.columns = [
-            "class_label", "lepton_pT", "lepton_eta", "lepton_phi", "missing_energy_magnitude", "missing_energy_phi",
-            "jet_1_pt", "jet_1_eta", "jet_1_phi", "jet_1_b-tag", "jet_2_pt", "jet_2_eta", "jet_2_phi", "jet_2_b-tag",
-            "jet_3_pt", "jet_3_eta", "jet_3_phi", "jet_3_b-tag", "jet_4_pt", "jet_4_eta", "jet_4_phi", "jet_4_b-tag",
-            "m_jj", "m_jjj", "m_lv", "m_jlv", "m_bb", "m_wbb", "m_wwbb"
-        ]
-        label_col = df.columns[0]
-
-        X = df.drop(label_col, axis=1).replace({0.0: 0, 1.0: 1}).to_numpy()
-        y = df[label_col].to_numpy()
+        y = df[label_col].replace({"Good": 0, "Bad": 1}).astype(int).to_numpy()
     
     elif dataset_name == COVERTYPE_NAME:
         X,y = sklearn.datasets.fetch_covtype(return_X_y=True)
@@ -101,21 +63,19 @@ def get_X_y(dataset_name: str):
     elif dataset_name == CALIFORNIA_HOUSING_NAME:
         X, y = sklearn.datasets.fetch_california_housing(return_X_y=True)
     
-    elif dataset_name == ARBOVIRUSES_NAME:
-        # Se puede descargar el dataset desde
+    elif dataset_name == DENGUE_DATASET:
         path_to_dataset = os.path.join("datasets", "arboviruses_dataset.csv")
         df = pd.read_csv(path_to_dataset, sep=";")
-        df = df.dropna()
+        
         label_col = "CLASSI_FIN"
+        desired_targets = ['CHIKUNGUNYA', 'DENGUE']
+        df = df[df[label_col].isin(desired_targets)]
+
         X = df.drop(label_col, axis=1).to_numpy()
-
-        le = sklearn.preprocessing.LabelEncoder()
-        df[label_col] = le.fit_transform(df[label_col])
-
-        y = df[label_col].to_numpy()
+        y = sklearn.preprocessing.LabelEncoder().fit_transform(df[label_col])
     
     else:
-        raise ValueError("Cannot find a dataset with that name.")
+        raise NotImplementedError()
     
     assert X.shape[0] == N_SAMPLES_PER_DATASET[dataset_name]
     return X,y
@@ -205,17 +165,48 @@ def get_images_path():
         os.mkdir(p)
     return p
 
-def get_dataset_type(dataset_name: str):
-    dataset_type = DATASET_TYPES.get(dataset_name, None)
+def get_classicdescriptors_path():
+    p = os.path.join(get_results_path(), "classic_descriptors")
+    if not os.path.exists(p):
+        os.mkdir(p)
+    return p
 
-    if dataset_type is None:
+def get_classicdescriptors_split1_path():
+    p = os.path.join(get_results_path(), "classic_descriptors_split1")
+    if not os.path.exists(p):
+        os.mkdir(p)
+    return p
+
+def get_cnnmodels_path():
+    p = os.path.join(get_results_path(), "cnn_models")
+    if not os.path.exists(p):
+        os.mkdir(p)
+    return p
+
+def get_cnnfnnmodels_path():
+    p = os.path.join(get_results_path(), "cnn_ffnn_models")
+    if not os.path.exists(p):
+        os.mkdir(p)
+    return p
+
+def get_cnn_classicdescriptors_path():
+    p = os.path.join(get_results_path(), "cnn_classic_models")
+    if not os.path.exists(p):
+        os.mkdir(p)
+    return p
+
+def get_dataset_type_str(dataset_name: str):
+    dataset_type_str = DATASET_TYPES.get(dataset_name, None)
+    if dataset_type_str is None:
         raise ValueError("Cannot find a dataset with that name.")
-    
-    return dataset_type
+    return dataset_type_str
 
 def is_dataset_classification(dataset_name: str):
-    return get_dataset_type(dataset_name) == "supervised"
+    return get_dataset_type_str(dataset_name) == "supervised"
 
 def is_dataset_multiclass_classification(dataset_name: str):
-    return is_dataset_classification(dataset_name) and \
-        dataset_name not in BINARY_CLASSIFICATION_DATASETS
+    return is_dataset_classification(dataset_name) and dataset_name not in BINARY_CLASSIFICATION_DATASETS
+
+# TODO implement
+def get_number_of_classes(dataset_name: str):
+    raise NotImplementedError()
