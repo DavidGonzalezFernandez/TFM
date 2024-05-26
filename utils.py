@@ -1,13 +1,15 @@
 import pandas as pd
 import sklearn.datasets
 import os
-from typing import Dict
+from typing import Dict, Optional
 import numpy as np
+
+pd.set_option('future.no_silent_downcasting', True)
 
 # Strings representing each dataset
 HELOC_NAME = "HELOC"
-CALIFORNIA_HOUSING_NAME = "CaliforniaHousing"
-DENGUE_DATASET = ""
+CALIFORNIA_HOUSING_NAME = "California_Housing"
+DENGUE_DATASET = "Dengue_Chikungunya"
 COVERTYPE_NAME = "Covertype"
 
 """List with all the available datasets"""
@@ -43,6 +45,13 @@ DATASET_TYPES: Dict[str, str] = {
     COVERTYPE_NAME: "supervised",
 }
 assert set(ALL_DATASETS) == set(DATASET_TYPES.keys())
+
+DATASETS_N_CLASSES: Dict[str, Optional[int]] = {
+    HELOC_NAME: 2,
+    CALIFORNIA_HOUSING_NAME: None,
+    DENGUE_DATASET: 2,
+    COVERTYPE_NAME: 7,
+}
 
 def get_X_y(dataset_name: str):
     """Given the string that represents a dataset, returns X and y"""
@@ -207,6 +216,25 @@ def is_dataset_classification(dataset_name: str):
 def is_dataset_multiclass_classification(dataset_name: str):
     return is_dataset_classification(dataset_name) and dataset_name not in BINARY_CLASSIFICATION_DATASETS
 
-# TODO implement
+def is_dataset_binary_classification(dataset_name: str):
+    return is_dataset_classification(dataset_name) and dataset_name in BINARY_CLASSIFICATION_DATASETS
+
+def is_dataset_regression(dataset_name: str):
+    return get_dataset_type_str(dataset_name) == "regression"
+
 def get_number_of_classes(dataset_name: str):
-    raise NotImplementedError()
+    n = DATASETS_N_CLASSES.get(dataset_name)
+    if not is_dataset_classification(dataset_name):
+        assert n is None
+        raise Exception("This dataset is not classification")
+    elif is_dataset_binary_classification(dataset_name):
+        assert n==2
+        return n
+    elif is_dataset_multiclass_classification(dataset_name):
+        assert n>2
+        return n
+    raise Exception("This shouldn't have happened.")
+
+# Check
+for dataset_name in ALL_DATASETS:
+    assert is_dataset_classification(dataset_name) ^ is_dataset_regression(dataset_name)
