@@ -199,14 +199,30 @@ def get_images_path_for_dataset(dataset_name, image_method):
         os.mkdir(p)
     return p
 
-def get_classicdescriptors_path():
+def get_classicdescriptors_base_path():
     p = os.path.join(get_results_path(), "classic_descriptors")
     if not os.path.exists(p):
         os.mkdir(p)
     return p
 
-def get_classicdescriptors_split1_path():
+def get_classicdescriptors_path(dataset_name):
+    if dataset_name not in ALL_DATASETS:
+        raise Exception("This dataset does not exist")
+    p = os.path.join(get_classicdescriptors_base_path(), dataset_name)
+    if not os.path.exists(p):
+        os.mkdir(p)
+    return p
+
+def get_classicdescriptors_split1_base_path():
     p = os.path.join(get_results_path(), "classic_descriptors_split1")
+    if not os.path.exists(p):
+        os.mkdir(p)
+    return p
+
+def get_classicdescriptors_split1_path(dataset_name):
+    if dataset_name not in ALL_DATASETS:
+        raise Exception("This dataset does not exist")
+    p = os.path.join(get_classicdescriptors_split1_base_path(), dataset_name)
     if not os.path.exists(p):
         os.mkdir(p)
     return p
