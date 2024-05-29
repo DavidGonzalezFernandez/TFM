@@ -227,8 +227,16 @@ def get_classicdescriptors_split1_path(dataset_name):
         os.mkdir(p)
     return p
 
-def get_cnnmodels_path():
+def get_cnnmodels_base_path():
     p = os.path.join(get_results_path(), "cnn_models")
+    if not os.path.exists(p):
+        os.mkdir(p)
+    return p
+
+def get_cnnmodels_path(dataset_name):
+    if dataset_name not in ALL_DATASETS:
+        raise Exception("This dataset does not exist")
+    p = os.path.join(get_cnnmodels_base_path(), dataset_name)
     if not os.path.exists(p):
         os.mkdir(p)
     return p
