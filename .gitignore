@@ -4,13 +4,17 @@ __pycache__/
 # Jupyter Notebook
 .ipynb_checkpoints
 
+##########################################
 # My repository files
+##########################################
 # Don't upload any of the images
 images/
 
-# Don't upload the results (explicity say which ones don't to upload)
-results/classic_descriptors_split1
-results/classic_descriptors
+# Don't upload the results
+results/
 
-# Don't upload the forlder with pruebas
+# Don't upload the forlder with dummy code
 pruebas/
+
+# Don't upload the resources for my LaTeX document
+LATEX/
